@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaludPlus PRO - Monitor Salares Norte</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #8e44ad;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --dark: #2c3e50;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background-color: #f4f7f6; overflow: hidden; }
+        #map { height: 100vh; width: 100vw; z-index: 1; }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            z-index: 1000;
+            position: absolute;
+            width: 300px;
+        }
+
+        .info-panel { top: 20px; left: 20px; padding: 20px; border-left: 6px solid var(--success); }
+        .controls {
+    top: 250px; /* Debajo de los botones laterales */
+    right: 20px;
+    left: auto; /* Anulamos el left: 20px previo */
+    padding: 20px;
+    display: none; /* Oculto por defecto */
+    width: 220px; /* Un poco más estrecho para el lateral */
+}
+        .map-overlay-btns { top: 20px; right: 60px; position: absolute; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
+
+        .btn {
+            border: none; padding: 12px; border-radius: 8px; cursor: pointer;
+            font-weight: 600; width: 100%; margin-top: 10px; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-blue { background: var(--primary); color: white; }
+        .btn-green { background: var(--success); color: white; }
+        .btn-purple { background: var(--secondary); color: white; }
+
+        .btn-toggle {
+            background: white; border: 2px solid var(--primary); color: var(--primary);
+            padding: 10px 15px; border-radius: 10px; cursor: pointer; font-weight: bold;
+        }
+        .btn-toggle.active { background: var(--primary); color: white; }
+
+        .history-drawer {
+            position: fixed; bottom: -550px; left: 0; width: 100%; height: 520px;
+            background: white; z-index: 2000; transition: all 0.5s ease;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.2); border-radius: 30px 30px 0 0;
+            padding: 30px; box-sizing: border-box;
+        }
+        .history-drawer.active { bottom: 0; }
+        .drawer-handle { width: 60px; height: 6px; background: #e0e0e0; margin: -15px auto 20px; border-radius: 10px; cursor: pointer; }
+
+        .drawer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; height: 90%; }
+        .list-container { overflow-y: auto; padding-right: 15px; border-right: 1px solid #eee; }
+
+        .visit-item { padding: 15px; border-radius: 12px; background: #f8f9fa; margin-bottom: 12px; cursor: pointer; border-left: 5px solid var(--primary); }
+        .visit-tag { font-size: 0.7em; background: #d6eaf8; color: var(--primary); padding: 4px 10px; border-radius: 20px; font-weight: bold; float: right; }
+
+        .status-alert {
+    color: var(--danger);
+    font-weight: bold;
+    animation: pulse 1.5s infinite;
+}
+#datePicker::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(0.5) sepia(1) saturate(5) hue-rotate(240deg); /* Lo pone color purpura */
+}
+
+.btn-purple {
+    background: var(--secondary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.btn-purple:hover {
+    background: #732d91;
+    transform: translateY(-1px);
+}
+        input[type="range"] { width: 100%; accent-color: var(--secondary); margin-top: 15px; }
+        input[type="date"] { width: 100%; padding: -5px; border-radius: 8px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div class="map-overlay-btns">
+    <button id="autoCenterBtn" class="btn-toggle active">
+        <i class="fas fa-crosshairs"></i> Auto-Centrado: ON
+    </button>
+    <button class="btn-toggle" onclick="irAMiUbicacion()" style="border-color:#34495e; color:#34495e">
+        <i class="fas fa-street-view"></i> Mi Ubicación
+    </button>
+
+    <hr style="border: 0; border-top: 1px solid #ddd; margin: 5px 0;">
+
+    <div style="background: white; padding: 10px; border-radius: 12px; border: 2px solid var(--secondary); box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <label style="font-size: 0.75em; color: var(--secondary); font-weight: bold; display: block; margin-bottom: 5px;">FECHA DE CONSULTA:</label>
+        <input type="date" id="datePicker" style="width: 100%; border: none; font-family: inherit; font-size: 13px; color: var(--dark); outline: none;">
+        <button class="btn-purple" onclick="activarTimeMachine()" style="margin-top: 8px; padding: 8px; font-size: 12px; width: 100%; border-radius: 6px;">
+            <i class="fas fa-search-location"></i> Cargar Historial
+        </button>
+    </div>
+
+    <button id="editBtn" class="btn-toggle" style="border-color:var(--primary); color:var(--primary); margin-top: 5px;">
+        <i class="fas fa-edit"></i> Editar Cerco
+    </button>
+</div>
+
+<div class="info-panel glass-panel">
+    <div style="font-size: 0.7em; color: #666; letter-spacing: 1px;">SALARES NORTE - MONITOR</div>
+
+    <div style="margin-top: 5px;">
+        <strong style="font-size: 1.1em; color: var(--dark);">
+            <i class="fas fa-mobile-alt" style="color: var(--primary);"></i>
+            <span id="deviceModel">Cargando dispositivo...</span>
+        </strong>
+    </div>
+
+    <div id="batteryContainer" style="margin-top: 8px; font-size: 0.9em; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+        <i id="batteryIcon" class="fas fa-battery-three-quarters"></i>
+        <span id="batteryLevel">--%</span>
+    </div>
+
+    <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">
+
+    <div style="font-size: 0.9em;">
+        <strong>Estado:</strong> <span id="status">Iniciando...</span>
+    </div>
+</div>
+
+<div class="controls glass-panel" id="panelControles">
+    <label><b>Radio Seguro:</b> <span id="radiusVal">500</span>m</label>
+    <input type="range" id="radiusSlider" min="50" max="2000" step="50" value="500" disabled>
+
+    <button id="saveBtn" class="btn btn-green" style="display: none;" onclick="guardarEdicionCerco()">
+        <i class="fas fa-save"></i> Guardar Cambios
+    </button>
+    <button class="btn" style="background:#eee; color:#666; margin-top:5px;" onclick="cancelarEdicionCerco()">
+        Cancelar
+    </button>
+</div>
+
+<div id="historyDrawer" class="history-drawer">
+    <div class="drawer-handle" onclick="cerrarTimeMachine()"></div>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+        <h2 style="margin:0;"><i class="fas fa-map-marked-alt"></i> Historial: <span id="labelFecha">--/--/--</span></h2>
+        <button onclick="cerrarTimeMachine()" class="btn btn-blue" style="width:auto; margin:0">Cerrar</button>
+    </div>
+
+    <div class="drawer-grid">
+        <div class="list-container" id="visitasContainer"></div>
+
+        <div style="text-align: center; background: #fdfdfd; padding: 20px; border-radius: 15px; border: 1px solid #eee;">
+            <h4 style="margin-top:0"><i class="fas fa-route"></i> Reproducción</h4>
+            <div id="timelineTime" style="font-size: 2.2em; font-weight: 800; color: var(--dark);">--:--</div>
+            <div id="timelineAddress" style="color: #7f8c8d; font-size: 0.9em; min-height: 45px; margin: 10px 0;">📍 Seleccione un punto...</div>
+            <input type="range" id="historySlider" min="0" max="0" value="0">
+            <p style="font-size: 0.75em; color: #999;">Desliza para ver el movimiento minuto a minuto</p>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const DEVICE_ID = "09297a19-25ea-40cc-9083-a3e00d6084f2";
+    const API_BASE = "http://localhost:8080/api/v1";
+
+    let centroSeguro = [-16.3988, -71.5369];
+    let radioSeguro = 500;
+    let esModoEdicion = false;
+    let esModoHistoria = false;
+    let autoCentrado = true;
+    let direccionCache = {};
+    let debounceTimer;
+
+    const map = L.map('map', { zoomControl: false }).setView(centroSeguro, 15);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+
+    let zonaSegura = L.circle(centroSeguro, { color: '#2ecc71', weight: 2, radius: radioSeguro }).addTo(map);
+    const rutaHistoria = L.polyline([], { color: '#8e44ad', weight: 4, opacity: 0.7, dashArray: '5, 10' }).addTo(map);
+
+    let markerHijo, markerAdmin, markerHistoria;
+    let historialDia = [];
+
+function calcularTiempoTranscurrido(fechaISO) {
+    const ahora = new Date();
+    const registro = new Date(fechaISO);
+    const diferenciaSegundos = Math.floor((ahora - registro) / 1000);
+
+    if (diferenciaSegundos < 60) return `Hace unos segundos`;
+    const minutos = Math.floor(diferenciaSegundos / 60);
+    if (minutos < 60) return `Hace ${minutos} min`;
+    const horas = Math.floor(minutos / 60);
+    return `Hace ${horas} hora(s)`;
+}
+    // --- DIRECCIONES USANDO TU BACKEND (SOLUCIÓN CORS) ---
+async function fetchAddress(lat, lon) {
+    const key = `${lat.toFixed(4)},${lon.toFixed(4)}`;
+
+    // 1. Revisar si ya tenemos la dirección en memoria
+    if (direccionCache[key]) return direccionCache[key];
+
+    try {
+        // 2. Llamamos a TU API (el nuevo endpoint que pusimos en el Controller)
+        // Ya no usamos "https://nominatim.openstreetmap.org/..."
+        const response = await fetch(`${API_BASE}/locations/address?lat=${lat}&lon=${lon}`);
+
+        if (!response.ok) {
+            console.warn("El servidor no pudo obtener la dirección");
+            return "📍 Dirección no disponible";
+        }
+
+        const data = await response.json();
+
+        // 3. Formatear la dirección igual que antes
+        const calle = data.address?.road || 'Calle s/n';
+        const zona = data.address?.suburb || data.address?.city || data.address?.town || '';
+        const addr = `${calle}, ${zona}`;
+
+        // 4. Guardar en caché y retornar
+        direccionCache[key] = addr;
+        return addr;
+
+    } catch (e) {
+        console.error("Error en fetchAddress:", e);
+        return "📍 Error de conexión";
+    }
+}
+
+    // --- FUNCIONES DE MAPA ---
+    function trackAdmin() {
+    if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(p => {
+            const ll = [p.coords.latitude, p.coords.longitude];
+            const miPosText = `Tú: ${p.coords.latitude.toFixed(6)}, ${p.coords.longitude.toFixed(6)}`;
+
+            if (!markerAdmin) {
+                markerAdmin = L.circleMarker(ll, {
+                    radius: 7,
+                    color: 'white',
+                    fillColor: '#3498db',
+                    fillOpacity: 1,
+                    weight: 2
+                }).addTo(map).bindPopup(miPosText);
+            } else {
+                markerAdmin.setLatLng(ll).setPopupContent(miPosText);
+            }
+        });
+    }
+}
+
+    function irAMiUbicacion() { if (markerAdmin) { map.flyTo(markerAdmin.getLatLng(), 17); autoCentrado = false; document.getElementById('autoCenterBtn').classList.remove('active'); } }
+
+async function actualizarRadar() {
+    if (esModoEdicion || esModoHistoria) return;
+    try {
+        const res = await fetch(`${API_BASE}/locations/device/${DEVICE_ID}`);
+        const data = await res.json();
+
+        if (data.length > 0) {
+            const ult = data[0];
+            const pos = [ult.latitude, ult.longitude];
+
+            // --- 1. ACTUALIZACIÓN DE MODELO Y BATERÍA ---
+            // Mostramos el modelo (ej: Samsung A54) o un valor por defecto
+            document.getElementById('deviceModel').innerText = ult.deviceModel || "Dispositivo Android";
+
+            const batLevel = ult.batteryLevel || 0;
+            const batLabel = document.getElementById('batteryLevel');
+            const batIcon = document.getElementById('batteryIcon');
+
+            batLabel.innerText = `${batLevel}%`;
+
+            // Lógica visual para la batería (Colores y Estados)
+            if (batLevel <= 20) {
+                batLabel.style.color = "var(--danger)";
+                batIcon.className = "fas fa-battery-empty"; // Crítico
+                batIcon.style.color = "var(--danger)";
+            } else if (batLevel <= 50) {
+                batLabel.style.color = "#f39c12"; // Naranja preventivo
+                batIcon.className = "fas fa-battery-quarter";
+                batIcon.style.color = "#f39c12";
+            } else {
+                batLabel.style.color = "var(--success)";
+                batIcon.className = "fas fa-battery-full"; // Óptimo
+                batIcon.style.color = "var(--success)";
+            }
+
+            // --- 2. CÁLCULO DE ANTIGÜEDAD DE SEÑAL ---
+            const ahora = new Date();
+            const registro = new Date(ult.recordedAt);
+            const diferenciaMinutos = Math.floor((ahora - registro) / 1000 / 60);
+
+            let tiempoSena = "Hace unos segundos";
+            if (diferenciaMinutos >= 1 && diferenciaMinutos < 60) {
+                tiempoSena = `Hace ${diferenciaMinutos} min`;
+            } else if (diferenciaMinutos >= 60) {
+                tiempoSena = `Hace ${Math.floor(diferenciaMinutos / 60)} hora(s)`;
+            }
+
+            // --- 3. ACTUALIZACIÓN DE MARCADOR EN MAPA ---
+            const coordsText = `
+                <b>${ult.deviceModel || 'Objetivo'}</b><br>
+                ${ult.latitude.toFixed(6)}, ${ult.longitude.toFixed(6)}<br>
+                <small>Sincronizado: ${tiempoSena}</small><br>
+                <small>Batería: ${batLevel}%</small>
+            `;
+
+            if (!markerHijo) {
+                markerHijo = L.marker(pos).addTo(map).bindPopup(coordsText);
+            } else {
+                markerHijo.setLatLng(pos).setPopupContent(coordsText);
+            }
+
+            if (autoCentrado) map.panTo(pos);
+
+            // --- 4. LÓGICA DE GEOCERCA Y ESTADO ---
+            const dist = map.distance(pos, centroSeguro);
+            const statusLabel = document.getElementById('status');
+
+            let alertaConexion = "";
+            if (diferenciaMinutos > 10) {
+                alertaConexion = `<br><small style="color:orange; font-weight:bold;">⚠️ SEÑAL DÉBIL (${tiempoSena})</small>`;
+            }
+
+            if (dist > radioSeguro) {
+                statusLabel.innerHTML = `<span class="status-alert">⚠️ FUERA DE ZONA (+${Math.round(dist - radioSeguro)}m)</span>${alertaConexion}`;
+                zonaSegura.setStyle({color: '#e74c3c', fillColor: '#e74c3c', fillOpacity: 0.3});
+            } else {
+                statusLabel.innerHTML = `<span style="color:var(--success); font-weight:bold;">✅ EN ZONA SEGURA</span>${alertaConexion}`;
+                zonaSegura.setStyle({color: '#2ecc71', fillColor: '#2ecc71', fillOpacity: 0.15});
+            }
+        }
+    } catch (e) {
+        document.getElementById('status').innerText = "Buscando señal...";
+        console.error("Error en Radar:", e);
+    }
+}
+    // --- TIME MACHINE ---
+async function activarTimeMachine() {
+    // 1. Obtener la fecha del nuevo selector ubicado a la derecha
+    const fecha = document.getElementById('datePicker').value;
+    if (!fecha) return alert("Por favor, selecciona una fecha primero.");
+
+    try {
+        // 2. Limpieza de UI: Cerramos el modo edición de cerco si estuviera activo
+        if (typeof cancelarEdicionCerco === "function") cancelarEdicionCerco();
+
+        const [resH, resV] = await Promise.all([
+            fetch(`${API_BASE}/locations/device/${DEVICE_ID}/history?date=${fecha}`),
+            fetch(`${API_BASE}/locations/device/${DEVICE_ID}/visitas`)
+        ]);
+
+        historialDia = await resH.json();
+        const visitas = await resV.json();
+
+        if (historialDia.length === 0) {
+            return alert("No hay datos registrados para el día: " + fecha);
+        }
+
+        // 3. Activación de estados y Panel Inferior
+        esModoHistoria = true;
+        document.getElementById('labelFecha').innerText = fecha;
+        document.getElementById('historyDrawer').classList.add('active');
+
+        // --- MEJORA DE PRECISIÓN: Simplificación de ruta ---
+        // Filtramos puntos que están a menos de 15 metros del anterior para evitar "ruido" de GPS
+        const puntosSimplificados = [];
+        historialDia.forEach((p, i) => {
+            if (i === 0) {
+                puntosSimplificados.push(p);
+                return;
+            }
+            const ultimo = puntosSimplificados[puntosSimplificados.length - 1];
+            const dist = map.distance([p.latitude, p.longitude], [ultimo.latitude, ultimo.longitude]);
+
+            if (dist > 15) { // Solo agregamos si el movimiento fue real (> 15 metros)
+                puntosSimplificados.push(p);
+            }
+        });
+
+        // Dibujamos la ruta con los puntos limpios y ajustamos el Slider
+        rutaHistoria.setLatLngs(puntosSimplificados.map(p => [p.latitude, p.longitude]));
+        document.getElementById('historySlider').max = historialDia.length - 1;
+        document.getElementById('historySlider').value = 0; // Reiniciar al inicio
+
+        // --- RENDERIZADO DE ESTANCIAS ---
+        const estanciasDia = visitas.filter(v => v.horaEntrada.startsWith(fecha) && v.duracionMinutos >= 3);
+        const container = document.getElementById('visitasContainer');
+        container.innerHTML = '<h4><i class="fas fa-walking"></i> Estancias detectadas</h4>';
+
+        // Capa para los círculos de estancia (para poder borrarlos después)
+        if (window.capaEstancias) map.removeLayer(window.capaEstancias);
+        window.capaEstancias = L.layerGroup().addTo(map);
+
+        estanciasDia.forEach((v, idx) => {
+            // A. Crear elemento en la lista lateral
+            const div = document.createElement('div');
+            div.className = 'visit-item';
+            div.id = `visit-${idx}`;
+            div.innerHTML = `
+                <span class="visit-tag">${v.duracionMinutos} min</span>
+                <strong class="addr">📍 Cargando dirección...</strong><br>
+                <small>${new Date(v.horaEntrada).toLocaleTimeString()}</small>
+            `;
+            div.onclick = () => {
+                map.flyTo([v.latitud, v.longitud], 18);
+                // Al hacer clic en la estancia, también movemos el slider de reproducción al punto más cercano si es posible
+            };
+            container.appendChild(div);
+
+            // B. Si la estancia es > 15 min, albergar puntos en un círculo naranja visual
+            if (v.duracionMinutos >= 15) {
+                L.circle([v.latitud, v.longitud], {
+                    radius: 25,
+                    color: '#e67e22',
+                    fillColor: '#e67e22',
+                    fillOpacity: 0.4,
+                    weight: 2
+                }).addTo(window.capaEstancias)
+                  .bindPopup(`<b>📍 Estancia Prolongada</b><br>Duración: ${v.duracionMinutos} min<br>Llegada: ${new Date(v.horaEntrada).toLocaleTimeString()}`);
+            }
+        });
+
+        // 4. Carga lenta de direcciones (Anti-bloqueo Nominatim)
+        for(let i=0; i < estanciasDia.length; i++) {
+            if(!esModoHistoria) break;
+            const a = await fetchAddress(estanciasDia[i].latitud, estanciasDia[i].longitud);
+            const el = document.querySelector(`#visit-${i} .addr`);
+            if(el) el.innerText = a;
+            await new Promise(r => setTimeout(r, 1500));
+        }
+
+        // 5. Ajustes finales de visualización
+        if (markerHijo) map.removeLayer(markerHijo);
+        actualizarPuntoHistoria(0);
+        map.fitBounds(rutaHistoria.getBounds(), { padding: [50, 50] });
+
+    } catch (e) {
+        console.error("Error en activarTimeMachine:", e);
+        alert("Error al conectar con el servidor de SaludPlus.");
+    }
+}
+
+    function actualizarPuntoHistoria(idx) {
+        const p = historialDia[idx];
+        if (!p) return;
+        const pos = [p.latitude, p.longitude];
+
+        // Formateamos las coordenadas para el Popup y Google Maps
+        const latFixed = p.latitude.toFixed(6);
+        const lonFixed = p.longitude.toFixed(6);
+        const gMapsUrl = `https://www.google.com/maps?q=${latFixed},${lonFixed}`;
+
+        // Crear el contenido del Popup con link a Google Maps
+        const popupContent = `
+            <div style="text-align:center;">
+                <b style="color:var(--secondary);">⏱️ ${new Date(p.recordedAt).toLocaleTimeString()}</b><br>
+                <code style="font-size:11px;">${latFixed}, ${lonFixed}</code><br>
+                <a href="${gMapsUrl}" target="_blank" style="
+                    display:inline-block;
+                    margin-top:8px;
+                    padding:4px 8px;
+                    background:#4285F4;
+                    color:white;
+                    text-decoration:none;
+                    border-radius:4px;
+                    font-size:10px;
+                    font-weight:bold;">
+                    <i class="fab fa-google"></i> Ver en Google Maps
+                </a>
+            </div>
+        `;
+
+        if (!markerHistoria) {
+            markerHistoria = L.circleMarker(pos, {
+                radius: 10,
+                color: 'white',
+                fillColor: '#8e44ad',
+                fillOpacity: 1,
+                weight: 3
+            }).addTo(map).bindPopup(popupContent);
+        } else {
+            markerHistoria.setLatLng(pos).setPopupContent(popupContent);
+        }
+
+        // Abrir el popup automáticamente al mover el slider
+        markerHistoria.openPopup();
+
+        document.getElementById('timelineTime').innerText = new Date(p.recordedAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+        document.getElementById('timelineAddress').innerText = "📍 Buscando dirección...";
+
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(async () => {
+            const addr = await fetchAddress(p.latitude, p.longitude);
+            document.getElementById('timelineAddress').innerText = `📍 ${addr}`;
+        }, 800);
+
+        if (!map.getBounds().contains(pos)) map.panTo(pos);
+    }
+
+   function cerrarTimeMachine() {
+    esModoHistoria = false;
+    document.getElementById('historyDrawer').classList.remove('active');
+
+    // Limpieza de capas de historial
+    rutaHistoria.setLatLngs([]);
+    if (window.capaEstancias) map.removeLayer(window.capaEstancias);
+    if (markerHistoria) { map.removeLayer(markerHistoria); markerHistoria = null; }
+
+    // Regreso al presente
+    if (markerHijo) {
+        markerHijo.addTo(map);
+        const posicionActual = markerHijo.getLatLng();
+
+        // Volamos al punto real y reactivamos el seguimiento
+        map.flyTo(posicionActual, 16);
+        autoCentrado = true;
+
+        const btnAC = document.getElementById('autoCenterBtn');
+        if (btnAC) {
+            btnAC.classList.add('active');
+            btnAC.innerHTML = '<i class="fas fa-crosshairs"></i> Auto-Centrado: ON';
+        }
+    }
+
+    // Ejecutamos una actualización inmediata para ver el estado actual
+    actualizarRadar();
+}
+
+    // --- GEOCERCA ---
+    document.getElementById('editBtn').onclick = () => {
+        esModoEdicion = true;
+        document.getElementById('editBtn').style.display = 'none';
+        document.getElementById('saveBtn').style.display = 'block';
+        document.getElementById('radiusSlider').disabled = false;
+    };
+
+    map.on('click', (e) => {
+        if (!esModoEdicion) return;
+        centroSeguro = [e.latlng.lat, e.latlng.lng];
+        zonaSegura.setLatLng(centroSeguro);
+    });
+
+    document.getElementById('radiusSlider').oninput = (e) => {
+        radioSeguro = e.target.value;
+        document.getElementById('radiusVal').innerText = radioSeguro;
+        zonaSegura.setRadius(radioSeguro);
+    };
+
+    document.getElementById('saveBtn').onclick = async () => {
+        const payload = { safeLatitude: centroSeguro[0], safeLongitude: centroSeguro[1], safeRadius: radioSeguro };
+        const res = await fetch(`${API_BASE}/devices/${DEVICE_ID}/safe-zone`, {
+            method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            esModoEdicion = false;
+            document.getElementById('editBtn').style.display = 'block';
+            document.getElementById('saveBtn').style.display = 'none';
+            document.getElementById('radiusSlider').disabled = true;
+            alert("Configuración guardada");
+        }
+    };
+
+    document.getElementById('historySlider').oninput = (e) => actualizarPuntoHistoria(e.target.value);
+    document.getElementById('autoCenterBtn').onclick = function() {
+        autoCentrado = !autoCentrado;
+        this.classList.toggle('active');
+        this.innerHTML = autoCentrado ? '<i class="fas fa-crosshairs"></i> Auto-Centrado: ON' : '<i class="fas fa-crosshairs"></i> Auto-Centrado: OFF';
+    };
+// --- FUNCIONES DE SECTORIZACIÓN CORREGIDAS ---
+
+function abrirPanelHistorial() {
+    cancelarEdicionCerco(); // Cerramos edición si está abierta
+    document.getElementById('historyDrawer').classList.add('active');
+}
+
+// Activar Edición desde el botón lateral
+document.getElementById('editBtn').onclick = () => {
+    esModoEdicion = true;
+    autoCentrado = false;
+    document.getElementById('autoCenterBtn').classList.remove('active');
+
+    // UI: Ocultamos el botón de editar y mostramos el panel de radio/guardado
+    document.getElementById('editBtn').style.display = 'none';
+    const panel = document.getElementById('panelControles');
+    panel.style.display = 'block';
+    panel.style.top = '250px'; // Posición debajo de los botones laterales
+    panel.style.right = '60px';
+    panel.style.left = 'auto';
+
+    document.getElementById('saveBtn').style.display = 'block';
+    document.getElementById('radiusSlider').disabled = false;
+};
+
+function cancelarEdicionCerco() {
+    esModoEdicion = false;
+    document.getElementById('panelControles').style.display = 'none';
+    document.getElementById('editBtn').style.display = 'block';
+    document.getElementById('radiusSlider').disabled = true;
+}
+
+async function guardarEdicionCerco() {
+    const payload = {
+        safeLatitude: centroSeguro[0],
+        safeLongitude: centroSeguro[1],
+        safeRadius: radioSeguro
+    };
+
+    const res = await fetch(`${API_BASE}/devices/${DEVICE_ID}/safe-zone`, {
+        method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+        alert("Geocerca guardada");
+        cancelarEdicionCerco();
+    }
+}
+document.addEventListener('DOMContentLoaded', () => {
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('datePicker').value = hoy;
+});
+    // Inicio
+    trackAdmin();
+    setInterval(actualizarRadar, 4000);
+    actualizarRadar();
+</script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+* { box-sizing: border-box; }
+body { margin: 0; background: #f5f7fa; color: #263e50; font-family: 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+button, input { font: inherit; }
+a:focus-visible, button:focus-visible { outline: 3px solid #2389c8; outline-offset: 4px; }
+::selection { background: #cce7fa; }

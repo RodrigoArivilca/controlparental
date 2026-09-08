@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaludPlus PRO - Master Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        :root {
+            --sidebar-width: 280px;
+            --primary: #3498db;
+            --secondary: #8e44ad;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --dark: #2c3e50;
+            --light-bg: #f8f9fa;
+            --text: #34495e;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--light-bg); color: var(--text); }
+
+        /* BARRA LATERAL */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--dark);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .sidebar-header { padding: 30px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-header h2 { margin: 0; letter-spacing: 2px; color: var(--primary); font-size: 1.4em; }
+
+        .nav-menu { flex-grow: 1; padding: 20px 0; overflow-y: auto; }
+        .nav-group { padding: 10px 25px; font-size: 0.75em; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 15px; padding: 12px 25px;
+            color: #bdc3c7; text-decoration: none; transition: 0.3s; cursor: pointer;
+        }
+        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.05); color: white; border-left: 4px solid var(--primary); }
+        .nav-item i { width: 20px; text-align: center; }
+
+        /* CONTENIDO PRINCIPAL */
+        .main-view { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* HEADER DE ESTADO */
+        .top-header {
+            background: white; height: 70px; display: flex; align-items: center;
+            justify-content: space-between; padding: 0 40px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .device-status { display: flex; gap: 25px; align-items: center; }
+        .status-pill { background: #ebf5fb; padding: 6px 15px; border-radius: 20px; font-size: 0.85em; font-weight: 600; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .status-pill.online { background: #e8f8f5; color: var(--success); }
+
+        /* CUADRÍCULA DE WIDGETS (HOME) */
+        .dashboard-home { padding: 30px; overflow-y: auto; }
+        .grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; }
+
+        .card { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.04); transition: 0.3s; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        .card-title { font-weight: bold; font-size: 1em; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: var(--dark); }
+
+        /* ESTILOS ESPECÍFICOS DE WIDGETS */
+        .activity-item { display: flex; gap: 15px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #f1f1f1; }
+        .activity-icon { width: 35px; height: 35px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9em; }
+
+        .stat-val { font-size: 2em; font-weight: 800; color: var(--dark); margin: 10px 0; }
+        .stat-desc { font-size: 0.8em; color: #7f8c8d; }
+
+        /* BOTONES DE ACCIÓN RÁPIDA */
+        .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .action-btn {
+            padding: 15px; border: none; border-radius: 10px; cursor: pointer;
+            font-weight: bold; color: white; transition: 0.3s; display: flex; flex-direction: column; align-items: center; gap: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <h2>SALUDPLUS <b>PRO</b></h2>
+    </div>
+    <nav class="nav-menu">
+        <div class="nav-group">GENERAL</div>
+        <a href="dashboard.html" class="nav-item active"><i class="fas fa-th-large"></i> Resumen Home</a>
+        <a href="index.html" class="nav-item"><i class="fas fa-map-marked-alt"></i> Monitoreo GPS</a>
+
+        <div class="nav-group">COMUNICACIONES</div>
+        <a href="llamadas.html" class="nav-item"><i class="fas fa-phone-alt"></i> Llamadas y Audios</a>
+        <a class="nav-item"><i class="fas fa-comment-dots"></i> Mensajería (Feed)</a>
+        <a class="nav-item"><i class="fas fa-address-book"></i> Lista de Contactos</a>
+
+        <div class="nav-group">MULTIMEDIA</div>
+        <a class="nav-item"><i class="fas fa-images"></i> Galería de Fotos</a>
+        <a class="nav-item"><i class="fas fa-microphone"></i> Grabaciones Ambiente</a>
+
+        <div class="nav-group">CONTROL LIVE</div>
+        <a class="nav-item" style="color: var(--danger);"><i class="fas fa-desktop"></i> Pantalla en Vivo</a>
+        <a class="nav-item"><i class="fas fa-shield-alt"></i> Seguridad y Bloqueos</a>
+    </nav>
+</aside>
+
+<main class="main-view">
+    <header class="top-header">
+        <div style="font-weight: bold; font-size: 1.2em;">Bienvenido, Administrador</div>
+        <div class="device-status">
+            <div class="status-pill online"><i class="fas fa-signal"></i> Conectado</div>
+            <div class="status-pill"><i class="fas fa-mobile-alt"></i> Redmi Note 14</div>
+            <div class="status-pill"><i class="fas fa-battery-three-quarters"></i> 84%</div>
+        </div>
+    </header>
+
+    <div class="dashboard-home">
+        <div class="grid-layout">
+
+            <div class="card" style="border-top: 5px solid var(--danger);">
+                <div class="card-title"><i class="fas fa-map-marker-alt"></i> Seguridad Geográfica</div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div id="home-geo-status" class="stat-val" style="color: var(--success);">EN ZONA</div>
+                        <div class="stat-desc">Estado: <b id="home-movement">En Movimiento (15 km/h)</b></div>
+                    </div>
+                    <div id="geo-icon-alert">
+                        <i class="fas fa-street-view fa-3x" style="color:var(--primary)"></i>
+                    </div>
+                </div>
+                <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+                <div style="font-size: 0.85em; color: #666;">
+                    <i class="fas fa-exclamation-triangle"></i> Última salida: Ayer 18:45 (Sector B)
+                </div>
+            </div>
+
+            <div class="card" style="border-top: 5px solid var(--secondary);">
+                <div class="card-title"><i class="fas fa-chart-pie"></i> Aplicaciones más Usadas (Hoy)</div>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.9em; margin-bottom:5px;">
+                            <span><i class="fab fa-whatsapp"></i> WhatsApp</span>
+                            <b>2h 15m</b>
+                        </div>
+                        <div style="width:100%; background:#eee; height:8px; border-radius:10px;">
+                            <div style="width:75%; background: #25d366; height:100%; border-radius:10px;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.9em; margin-bottom:5px;">
+                            <span><i class="fab fa-tiktok"></i> TikTok</span>
+                            <b>1h 10m</b>
+                        </div>
+                        <div style="width:100%; background:#eee; height:8px; border-radius:10px;">
+                            <div style="width:45%; background: #000; height:100%; border-radius:10px;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top:15px; font-size:0.8em; text-align:right;">
+                    <a href="#" style="color:var(--primary); text-decoration:none;">Ver todas las apps (24) →</a>
+                </div>
+            </div>
+
+            <div class="card" style="border-top: 5px solid var(--primary);">
+                <div class="card-title"><i class="fas fa-list-ul"></i> Eventos Principales</div>
+                <div class="activity-item">
+                    <div class="activity-icon" style="background:var(--success)"><i class="fas fa-download"></i></div>
+                    <div>
+                        <div style="font-weight: bold; font-size: 0.9em;">Nueva App Instalada</div>
+                        <div style="font-size: 0.8em; color: #7f8c8d;">"Telegram" - Hace 10 min</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon" style="background:var(--danger)"><i class="fas fa-border-none"></i></div>
+                    <div>
+                        <div style="font-weight: bold; font-size: 0.9em;">Salida de Rango Permitido</div>
+                        <div style="font-size: 0.8em; color: #7f8c8d;">Detectado en: Av. Ejército - Hace 1h</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="border-top: 5px solid var(--dark);">
+                <div class="card-title"><i class="fas fa-broadcast-tower"></i> Control de Vigilancia</div>
+                <div class="quick-actions" style="grid-template-columns: 1fr;">
+                    <button class="action-btn" style="background:var(--secondary); flex-direction: row; justify-content: center; gap: 15px;">
+                        <i class="fas fa-microphone-alt fa-lg"></i>
+                        <span>ESCUCHAR AUDIO EN VIVO</span>
+                    </button>
+                    <button class="action-btn" style="background:var(--primary); flex-direction: row; justify-content: center; gap: 15px; margin-top:10px;">
+                        <i class="fas fa-video fa-lg"></i>
+                        <span>VER CÁMARA EN TIEMPO REAL</span>
+                    </button>
+                </div>
+                <p style="font-size: 0.75em; color: #999; margin-top: 10px; text-align: center;">
+                    <i class="fas fa-info-circle"></i> La transmisión en vivo consume más datos móviles.
+                </p>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

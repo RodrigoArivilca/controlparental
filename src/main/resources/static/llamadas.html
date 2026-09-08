@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaludPlus - Registro de Llamadas y Audios</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        :root {
+            --sidebar-width: 280px;
+            --primary: #3498db;
+            --secondary: #8e44ad;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --dark: #2c3e50;
+            --light-bg: #f4f7f6;
+            --text: #34495e;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            display: flex; /* Crucial para alinear sidebar y contenido */
+            height: 100vh;
+            background: var(--light-bg);
+            color: var(--text);
+        }
+
+        /* --- SIDEBAR (IGUAL AL MASTER) --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--dark);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            flex-shrink: 0; /* Para que no se encoja */
+        }
+
+        .sidebar-header { padding: 30px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-header h2 { margin: 0; letter-spacing: 2px; color: var(--primary); font-size: 1.4em; }
+
+        .nav-menu { flex-grow: 1; padding: 20px 0; overflow-y: auto; }
+        .nav-group { padding: 10px 25px; font-size: 0.75em; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 15px; padding: 12px 25px;
+            color: #bdc3c7; text-decoration: none; transition: 0.3s; cursor: pointer;
+        }
+        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.05); color: white; border-left: 4px solid var(--primary); }
+        .nav-item i { width: 20px; text-align: center; }
+
+        /* --- CONTENEDOR PRINCIPAL --- */
+        .main-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .header h1 { margin: 0; color: var(--dark); font-size: 1.5rem; }
+
+        /* --- ESTILO CARD (PARA LA TABLA) --- */
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.04);
+        }
+
+        /* --- TABLA ESTILIZADA --- */
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8f9fa; padding: 15px; text-align: left; color: #666; font-size: 0.8rem; text-transform: uppercase; border-bottom: 2px solid #eee; }
+        td { padding: 15px; border-bottom: 1px solid #eee; vertical-align: middle; font-size: 0.9rem; }
+
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; color: white; }
+        .bg-whatsapp { background: #25d366; }
+        .bg-incoming { background: var(--primary); }
+        .bg-outgoing { background: var(--secondary); }
+        .bg-missed { background: var(--danger); }
+
+        .play-btn {
+            background: var(--secondary); color: white; border: none;
+            padding: 8px 15px; border-radius: 50px; cursor: pointer;
+            transition: 0.3s; font-size: 0.8rem; font-weight: bold;
+        }
+        .play-btn:hover { background: var(--primary); transform: scale(1.05); }
+        .play-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* --- REPRODUCTOR (ANCHO AJUSTADO) --- */
+        .player-container {
+            position: fixed; bottom: 20px; right: 20px;
+            left: calc(var(--sidebar-width) + 20px);
+            background: var(--dark); color: white; padding: 15px 25px;
+            display: none; justify-content: space-between; align-items: center;
+            border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 2000;
+        }
+
+        .no-data { text-align: center; padding: 40px; color: #999; }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <h2>SALUDPLUS <b>PRO</b></h2>
+    </div>
+    <nav class="nav-menu">
+        <div class="nav-group">GENERAL</div>
+        <a href="dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> Resumen Home</a>
+        <a href="index.html" class="nav-item"><i class="fas fa-map-marked-alt"></i> Monitoreo GPS</a>
+
+        <div class="nav-group">COMUNICACIONES</div>
+        <a href="llamadas.html" class="nav-item active"><i class="fas fa-phone-alt"></i> Llamadas y Audios</a>
+        <a class="nav-item"><i class="fas fa-comment-dots"></i> Mensajería (Feed)</a>
+        <a class="nav-item"><i class="fas fa-address-book"></i> Lista de Contactos</a>
+
+        <div class="nav-group">MULTIMEDIA</div>
+        <a class="nav-item"><i class="fas fa-images"></i> Galería de Fotos</a>
+        <a class="nav-item"><i class="fas fa-microphone"></i> Grabaciones Ambiente</a>
+
+        <div class="nav-group">CONTROL LIVE</div>
+        <a class="nav-item" style="color: var(--danger);"><i class="fas fa-desktop"></i> Pantalla en Vivo</a>
+        <a class="nav-item"><i class="fas fa-shield-alt"></i> Seguridad y Bloqueos</a>
+    </nav>
+</aside>
+
+<main class="main-content">
+    <div class="header">
+        <h1><i class="fas fa-microphone-alt" style="color: var(--primary);"></i> Registro de Llamadas</h1>
+        <button onclick="cargarLlamadas()" style="padding: 10px 20px; cursor: pointer; background: white; border: 1px solid #ddd; border-radius: 8px; font-weight: bold; color: var(--text);">
+            <i class="fas fa-sync-alt"></i> Sincronizar Datos
+        </button>
+    </div>
+
+    <div class="card">
+        <table id="tablaLlamadas">
+            <thead>
+            <tr>
+                <th>Contacto / Número</th>
+                <th>Tipo</th>
+                <th>Duración</th>
+                <th>Fecha y Hora</th>
+                <th style="text-align: center;">Grabación</th>
+            </tr>
+            </thead>
+            <tbody id="listaLlamadas">
+            </tbody>
+        </table>
+        <div id="mensajeVacio" class="no-data" style="display:none;">
+            <i class="fas fa-folder-open fa-3x" style="margin-bottom: 10px; display: block; opacity: 0.3;"></i>
+            No hay llamadas registradas aún.
+        </div>
+    </div>
+</main>
+
+<div id="reproductorFlotante" class="player-container">
+    <div style="display: flex; flex-direction: column;">
+        <small style="opacity: 0.7;">Escuchando audio de:</small>
+        <span id="nombreReproduciendo" style="font-weight: bold; color: var(--primary);"></span>
+    </div>
+    <audio id="audioElement" controls style="height: 35px;"></audio>
+    <button onclick="cerrarReproductor()" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
+</div>
+
+<script>
+    // URL de tu túnel Ngrok actualizado
+    const API_URL = "https://unscented-nonconvertibly-debroah.ngrok-free.dev/api/v1/calls";
+    const DEVICE_ID = "09297a19-25ea-40cc-9083-a3e00d6084f2";
+
+    async function cargarLlamadas() {
+        console.log("Sincronizando historial de llamadas...");
+        try {
+            // Añadimos el header 'ngrok-skip-browser-warning' para evitar que Ngrok bloquee la petición
+            const res = await fetch(`${API_URL}/device/${DEVICE_ID}`, {
+                headers: {
+                    'ngrok-skip-browser-warning': 'true'
+                }
+            });
+
+            const data = await res.json();
+            console.log("Datos recibidos:", data);
+
+            const lista = document.getElementById('listaLlamadas');
+            const vacio = document.getElementById('mensajeVacio');
+            lista.innerHTML = "";
+
+            if (!data || data.length === 0) {
+                vacio.style.display = "block";
+                return;
+            }
+
+            vacio.style.display = "none";
+            data.forEach(call => {
+                const tr = document.createElement('tr');
+
+                // Mapeo de estilos para los Badges
+                let badgeClass = "bg-incoming";
+                if(call.callType === 'WHATSAPP') badgeClass = "bg-whatsapp";
+                if(call.callType === 'OUTGOING') badgeClass = "bg-outgoing";
+                if(call.callType === 'MISSED') badgeClass = "bg-missed";
+
+                // Inyección de datos usando los nombres de la Entidad Java
+                tr.innerHTML = `
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="background: #f0f2f5; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div>
+                                <b>${call.contactName || 'Desconocido'}</b><br>
+                                <small style="color:#777">${call.phoneNumber || 'Sin número'}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="badge ${badgeClass}">${call.callType || 'NORMAL'}</span></td>
+                    <td>${call.durationSeconds || 0}s</td>
+                    <td><small>${call.timestamp ? new Date(call.timestamp).toLocaleString() : '---'}</small></td>
+                    <td style="text-align: center;">
+                        <button class="play-btn" ${call.audioUrl ? '' : 'disabled'}
+                                onclick="reproducirAudio('${call.audioUrl}', '${call.contactName}')">
+                            <i class="fas fa-play"></i> Escuchar
+                        </button>
+                    </td>
+                `;
+                lista.appendChild(tr);
+            });
+        } catch (e) {
+            console.error("Error en la conexión:", e);
+        }
+    }
+
+    function reproducirAudio(url, nombre) {
+        if (!url) return;
+        const player = document.getElementById('reproductorFlotante');
+        const audio = document.getElementById('audioElement');
+        const label = document.getElementById('nombreReproduciendo');
+
+        label.innerText = nombre;
+        audio.src = url;
+        player.style.display = "flex";
+        audio.play();
+    }
+
+    function cerrarReproductor() {
+        const player = document.getElementById('reproductorFlotante');
+        const audio = document.getElementById('audioElement');
+        audio.pause();
+        player.style.display = "none";
+    }
+
+    // Carga automática al abrir la página
+    window.onload = cargarLlamadas;
+</script>
+
+</body>
+</html>

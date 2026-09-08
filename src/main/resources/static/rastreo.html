@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SaludPlus - Emisor GPS Pro + Telemetría</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        :root { --primary: #3498db; --success: #2ecc71; --danger: #e74c3c; --warning: #f1c40f; --secondary: #8e44ad; }
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; padding: 20px; background: #f0f2f5; color: #333; }
+        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 400px; margin: auto; border-top: 8px solid var(--primary); }
+
+        #status { font-weight: bold; margin: 15px 0; padding: 12px; border-radius: 10px; font-size: 14px; }
+        .online { background: #d4edda; color: #155724; }
+        .offline { background: #f8d7da; color: #721c24; }
+
+        .telemetry { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; background: #f8f9fa; padding: 15px; border-radius: 12px; border: 1px solid #eee; }
+        .tel-item { font-size: 12px; text-align: left; }
+        .tel-item b { display: block; font-size: 14px; color: var(--primary); }
+
+        /* Estilos Simulador de Llamadas */
+        .sim-panel { margin-top: 20px; padding: 15px; border: 1px dashed #ccc; border-radius: 12px; background: #fff; }
+        .btn-sim { background: var(--secondary); margin-bottom: 8px; font-size: 14px; padding: 10px; }
+        .btn-wa { background: #25d366; }
+
+        button { padding: 15px; font-size: 16px; cursor: pointer; background: var(--primary); color: white; border: none; border-radius: 10px; width: 100%; font-weight: bold; transition: 0.3s; }
+        button:disabled { background: #bdc3c7; cursor: not-allowed; }
+
+        #log { font-family: 'Consolas', monospace; font-size: 10px; margin-top: 15px; max-height: 120px; overflow-y: auto; background: #2c3e50; color: #ecf0f1; padding: 10px; border-radius: 8px; text-align: left; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2 style="margin-top:0">🛰️ SaludPlus Emisor</h2>
+    <p style="font-size: 11px; color: #666;">ID: 09297a19-25ea-40cc-9083-a3e00d6084f2</p>
+
+    <div class="telemetry">
+        <div class="tel-item">Modelo: <b id="uiModel">Detectando...</b></div>
+        <div class="tel-item">Batería: <b id="uiBattery">--%</b></div>
+    </div>
+
+    <div id="status" class="offline">GPS Desconectado</div>
+    <button id="btnIniciar" onclick="iniciarRastreo()">🚀 Iniciar Seguimiento GPS</button>
+
+    <div class="sim-panel">
+        <h4 style="margin-top:0"><i class="fas fa-flask"></i> Simulador de Llamadas</h4>
+        <button class="btn-sim" onclick="simularEventoLlamada('NORMAL')">
+            <i class="fas fa-phone"></i> Simular Llamada Normal
+        </button>
+        <button class="btn-sim btn-wa" onclick="simularEventoLlamada('WHATSAPP')">
+            <i class="fab fa-whatsapp"></i> Simular Llamada WhatsApp
+        </button>
+        <p style="font-size: 9px; color: #999;">Esto enviará datos de prueba al servidor.</p>
+    </div>
+
+    <div id="log">Esperando interacción...</div>
+</div>
+
+<script>
+    const DEVICE_ID = "09297a19-25ea-40cc-9083-a3e00d6084f2";
+    // URLs de tu Backend (Ngrok)
+    const API_GPS = "https://unscented-nonconvertibly-debroah.ngrok-free.dev/api/v1/locations/send";
+    const API_CALLS = "https://unscented-nonconvertibly-debroah.ngrok-free.dev/api/v1/calls/device/" + DEVICE_ID + "/register";
+
+    let batteryLevel = 0;
+    let deviceModel = "Desconocido";
+
+    function logger(msg) {
+        const logDiv = document.getElementById('log');
+        logDiv.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}<br>` + logDiv.innerHTML;
+    }
+
+    // --- LÓGICA DE TELEMETRÍA Y HARDWARE ---
+    async function obtenerInfoHardware() {
+        const ua = navigator.userAgent;
+        deviceModel = ua.includes("Android") ? "Android Device" : (ua.includes("iPhone") ? "iPhone" : navigator.platform);
+        document.getElementById('uiModel').innerText = deviceModel;
+
+        if (navigator.getBattery) {
+            const battery = await navigator.getBattery();
+            batteryLevel = Math.round(battery.level * 100);
+            document.getElementById('uiBattery').innerText = batteryLevel + "%";
+        }
+    }
+
+    // --- LÓGICA GPS (TU CÓDIGO ORIGINAL) ---
+    async function iniciarRastreo() {
+        await obtenerInfoHardware();
+        document.getElementById('btnIniciar').disabled = true;
+        document.getElementById('btnIniciar').innerText = "✅ Rastreo Activo";
+        document.getElementById('status').innerText = "🛰️ Buscando satélites...";
+        document.getElementById('status').className = "online";
+
+        navigator.geolocation.watchPosition(async (pos) => {
+            const payload = {
+                latitude: pos.coords.latitude,
+                longitude: pos.coords.longitude,
+                accuracy: pos.coords.accuracy,
+                batteryLevel: batteryLevel,
+                deviceModel: deviceModel,
+                device: { id: DEVICE_ID }
+            };
+            try {
+                await fetch(API_GPS, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+                logger(`📍 GPS: ${pos.coords.latitude.toFixed(4)} Enviado`);
+            } catch(e) { logger("💾 Error GPS: Guardando en mochila"); }
+        });
+    }
+
+    // --- NUEVA LÓGICA: SIMULADOR DE LLAMADAS ---
+    async function simularEventoLlamada(tipo) {
+        logger(`🧪 Simulando llamada ${tipo}...`);
+
+        const callPayload = {
+            contactName: tipo === 'WHATSAPP' ? "Maydér Rivera" : "Raúl (Amigo)",
+            phoneNumber: tipo === 'WHATSAPP' ? "+51 988 123 456" : "+51 950 000 111",
+            callType: tipo, // NORMAL o WHATSAPP
+            durationSeconds: Math.floor(Math.random() * 300) + 30, // Duración aleatoria
+            // Usamos un audio de prueba público de internet
+            audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+            timestamp: new Date().toISOString()
+        };
+
+        try {
+            const res = await fetch(API_CALLS, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(callPayload)
+            });
+
+            if (res.ok) {
+                logger(`✅ Llamada ${tipo} enviada con éxito.`);
+                alert(`¡Éxito! Ahora revisa tu archivo llamadas.html`);
+            } else {
+                logger(`❌ Error Servidor: ${res.status}`);
+            }
+        } catch (e) {
+            logger(`❌ Error Conexión: ${e.message}`);
+        }
+    }
+
+    window.onload = obtenerInfoHardware;
+</script>
+</body>
+</html>
