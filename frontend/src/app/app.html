@@ -11,11 +11,15 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18h4"/></svg>
         Dispositivos
       </a>
+      <a class="nav-item" routerLink="/mapa" routerLinkActive="active" ariaCurrentWhenActive="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2zM9 3v16M15 5v16"/></svg>
+        Mapa y ubicaciones
+      </a>
     </nav>
     <p class="sidebar-footer">Un espacio para conocer<br>los dispositivos registrados.</p>
   </aside>
   <div class="workspace">
-    <header class="topbar"><span>Control parental</span><span class="section-label">Dispositivos</span></header>
+    <header class="topbar"><span>Control parental</span><span class="section-label">Supervisión</span></header>
     <main id="contenido" tabindex="-1"><router-outlet /></main>
   </div>
 </div>

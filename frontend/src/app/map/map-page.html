@@ -1,0 +1,72 @@
+<section aria-labelledby="map-title">
+  <div class="heading"><div><p class="eyebrow">SUPERVISIÓN</p><h1 id="map-title">Mapa y ubicaciones</h1><p>Ubicación, historial y zona segura de tus dispositivos.</p></div></div>
+  @if (devicesLoading()) { <p role="status">Cargando dispositivos…</p> }
+  @else if (devicesError()) { <div class="message error" role="alert">No se pudieron cargar los dispositivos. <button (click)="loadDevices()">Reintentar</button></div> }
+  @else if (!devices().length) { <p class="message" role="status">Aún no hay dispositivos registrados para mostrar en el mapa.</p> }
+  @else {
+    <div class="toolbar">
+      <label>Dispositivo<select aria-label="Dispositivo" [value]="selectedId()" [disabled]="saving()" (change)="selectDevice($any($event.target).value)">@for (d of devices(); track d.id) { <option [value]="d.id" [selected]="d.id === selectedId()">{{ d.deviceName }}</option> }</select></label>
+      <button (click)="autoCenter.set(!autoCenter())" [attr.aria-pressed]="autoCenter()">Auto-centrado: {{ autoCenter() ? 'activado' : 'desactivado' }}</button>
+      <button (click)="locateMe()">Mi ubicación</button>
+    </div>
+    @if (geolocationMessage()) { <p class="hint" role="status">{{ geolocationMessage() }}</p> }
+    @if (configLoading()) { <p role="status">Cargando la configuración del dispositivo…</p> }
+    @if (configError()) { <div class="message error" role="alert">No se pudo cargar la geocerca del dispositivo. <button (click)="selectDevice(selectedId())">Reintentar</button></div> }
+    @if (notice()) { <p class="message success" role="status">{{ notice() }}</p> }
+    <div class="map-layout">
+      <div>
+        <app-map-canvas [position]="position()" [zone]="displayedZone()" [trail]="trail()" [visits]="visits()" [editing]="mode() === 'edit' && !saving()" [history]="mode() === 'history'" [autoCenter]="autoCenter()" [outside]="outside()" (centerPicked)="pickCenter($event)" />
+        <p class="legend"><span>● Dispositivo</span><span>● Tu ubicación</span><span>● Historial</span><span>○ Geocerca</span></p>
+      </div>
+      <aside class="panel" aria-label="Información de ubicación y geocerca">
+        <p class="eyebrow">{{ mode() === 'history' ? 'PUNTO DEL HISTORIAL' : 'ÚLTIMA UBICACIÓN' }}</p>
+        <h2>{{ device()?.deviceName || 'Dispositivo' }}</h2>
+        @if (mode() !== 'history' && locationLoading()) { <p role="status">Cargando ubicación…</p> }
+        @if (mode() !== 'history' && locationError()) { <div class="error" role="alert">No se pudo actualizar la ubicación. Se conserva el último dato recibido. <button (click)="startLive()" [disabled]="mode() !== 'live'">Reintentar</button></div> }
+        @if (position(); as p) {
+          <dl><div><dt>Modelo</dt><dd>{{ p.deviceModel || device()?.model || 'No informado' }}</dd></div><div><dt>Batería</dt><dd>{{ p.batteryLevel === null ? 'No informada' : p.batteryLevel + '%' }}</dd></div><div><dt>Precisión GPS</dt><dd>{{ p.accuracy === null ? 'No informada' : (p.accuracy | number:'1.0-1') + ' m' }}</dd></div><div><dt>Coordenadas</dt><dd>{{ p.latitude | number:'1.6-6' }}, {{ p.longitude | number:'1.6-6' }}</dd></div><div><dt>Registrada (Perú)</dt><dd>{{ p.recordedAt ? (p.recordedAt | date:'dd/MM/yyyy HH:mm:ss':'-0500') : 'Sin fecha' }}</dd></div></dl>
+          @if (mode() !== 'history' && minutesOld() !== null && minutesOld()! > 10) { <p class="warning">Señal antigua: {{ minutesOld() }} minutos sin una posición nueva.</p> }
+          <a [href]="mapsUrl()" target="_blank" rel="noopener noreferrer">Ver en Google Maps ↗</a>
+        } @else if (!configLoading() && !configError() && !locationLoading() && mode() !== 'history') { <p role="status">Este dispositivo aún no tiene ubicaciones válidas.</p> }
+        @if (invalidPoints()) { <p class="warning">Se omitieron {{ invalidPoints() }} posiciones con coordenadas inválidas.</p> }
+        <hr><h2>Geocerca</h2>
+        @if (savedZone(); as zone) {
+          <p>Radio guardado: <strong data-testid="saved-radius">{{ zone.safeRadius }} m</strong></p>
+          <p class="hint">Centro: {{ zone.safeLatitude | number:'1.6-6' }}, {{ zone.safeLongitude | number:'1.6-6' }}</p>
+          @if (distance() !== null) { <p class="zone-state" [class.outside]="outside()">{{ outside() ? 'Fuera de zona segura' : 'En zona segura' }} · {{ distance() | number:'1.0-0' }} m del centro</p> }
+        } @else { <p>No hay una geocerca válida configurada.</p> }
+        @if (mode() !== 'edit') { <button class="primary" (click)="editZone()" [disabled]="!device()">Editar geocerca</button> }
+        @else {
+          <form (submit)="$event.preventDefault(); saveZone()">
+            <p class="hint">Haz clic en el mapa para elegir el centro, o introduce sus coordenadas. El borrador se muestra en naranja.</p>
+            <label>Latitud<input type="number" min="-90" max="90" step="any" required [value]="draftValue('safeLatitude')" [disabled]="saving()" (input)="setDraft('safeLatitude', $any($event.target).value)"></label>
+            <label>Longitud<input type="number" min="-180" max="180" step="any" required [value]="draftValue('safeLongitude')" [disabled]="saving()" (input)="setDraft('safeLongitude', $any($event.target).value)"></label>
+            <label>Radio (metros)<input type="range" min="50" max="2000" step="50" [value]="draftValue('safeRadius')" [disabled]="saving()" (input)="setDraft('safeRadius', $any($event.target).value)"><output>{{ draft()?.safeRadius }} m</output></label>
+            @if (!canSave()) { <p class="warning">Indica coordenadas válidas y un radio entre 50 y 2000 metros.</p> }
+            @if (saveError()) { <p class="error" role="alert">{{ saveError() }}</p> }
+            <div class="actions"><button type="submit" class="primary" [disabled]="!canSave() || saving()">{{ saving() ? 'Guardando…' : 'Guardar geocerca' }}</button><button type="button" (click)="cancelEdit()" [disabled]="saving()">Cancelar</button></div>
+          </form>
+        }
+      </aside>
+    </div>
+    <section class="history-panel" aria-labelledby="history-title">
+      <div class="history-header"><div><h2 id="history-title">Historial de ubicaciones</h2><p class="hint">Selecciona un día de Perú para explorar el recorrido y las estancias.</p></div><div class="actions"><label>Fecha<input type="date" [value]="date()" (change)="date.set($any($event.target).value)"></label><button (click)="loadHistory()" [disabled]="!device() || saving() || !date()">Cargar historial</button>@if (mode() === 'history') { <button (click)="returnLive()">Volver al presente</button> }</div></div>
+      @if (mode() === 'history') {
+        @if (historyLoading()) { <p role="status">Cargando historial…</p> }
+        @else if (historyError()) { <p class="error" role="alert">No se pudo cargar el historial. Inténtalo de nuevo.</p> }
+        @else {
+          <p>Fecha consultada: {{ historyDate() }}</p>
+          @if (!historyPoints().length) { <p role="status">No hay ubicaciones para este día.</p> }
+          @else {
+            <label>Recorrer puntos del historial<input class="timeline" type="range" min="0" [max]="historyPoints().length - 1" step="1" [value]="historyIndex()" (input)="selectHistoryPoint(+$any($event.target).value)"></label>
+            <p>Punto {{ historyIndex() + 1 }} de {{ historyPoints().length }} · {{ position()?.recordedAt | date:'HH:mm:ss':'-0500' }} (Perú)</p><p role="status">{{ address() }}</p>
+          }
+          <h3>Estancias detectadas</h3>
+          @if (visitsError()) { <p class="error" role="alert">No se pudieron consultar las estancias.</p> }
+          @else if (!visits().length) { <p>No hay estancias de al menos tres minutos iniciadas ese día.</p> }
+          <ul class="visits">@for (visit of visits(); track visit.id) { <li><button (click)="focusVisit(visit)"><strong>{{ visit.nombreLugar || 'Estancia' }}</strong><span>{{ visit.direccion || 'Dirección no disponible' }}</span><small>{{ visit.duracionMinutos }} min · {{ visit.horaEntrada | date:'HH:mm' }} (hora registrada)</small></button></li> }</ul>
+        }
+      }
+    </section>
+  }
+</section>

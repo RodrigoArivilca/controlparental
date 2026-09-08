@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
+  { path: 'mapa', title: 'Mapa y ubicaciones | SaludPlus', loadComponent: () => import('./map/map-page').then((m) => m.MapPage) },
   { path: '', pathMatch: 'full', redirectTo: 'dispositivos' },
   {
     path: 'dispositivos',
