@@ -1,0 +1,174 @@
+.users-page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 42px 32px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #287cab;
+}
+
+h1 {
+  margin: 8px 0;
+  font-size: 36px;
+  color: #173b56;
+}
+
+p {
+  color: #64798b;
+}
+
+button {
+  cursor: pointer;
+}
+
+.primary {
+  border: 0;
+  border-radius: 7px;
+  padding: 12px 18px;
+  background: #1787c1;
+  color: white;
+  font-weight: 600;
+}
+
+.secondary {
+  border: 1px solid #cbd8e2;
+  border-radius: 7px;
+  padding: 11px 18px;
+  background: white;
+}
+
+.form-card,
+.table-card,
+.state-card {
+  background: white;
+  border: 1px solid #dbe4eb;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.form-card h2 {
+  margin-top: 0;
+  color: #173b56;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #344f63;
+}
+
+input,
+select {
+  border: 1px solid #cbd8e2;
+  border-radius: 7px;
+  padding: 11px;
+  font: inherit;
+}
+
+.check {
+  flex-direction: row;
+  align-items: center;
+  margin-top: 26px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.table-title {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 18px;
+  color: #173b56;
+}
+
+.table-title span {
+  background: #e9f5fb;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 15px 12px;
+  border-bottom: 1px solid #e8eef2;
+}
+
+th {
+  font-size: 12px;
+  color: #657d90;
+}
+
+.status {
+  color: #198754;
+  font-weight: 600;
+}
+
+.status.inactive {
+  color: #a96800;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.actions button {
+  border: 1px solid #d2dee7;
+  background: white;
+  border-radius: 6px;
+  padding: 7px 10px;
+}
+
+.actions .danger {
+  color: #b3261e;
+}
+
+.empty {
+  text-align: center;
+  color: #718495;
+  padding: 32px;
+}
+
+@media (max-width: 800px) {
+  .page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

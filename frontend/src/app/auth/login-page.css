@@ -1,0 +1,148 @@
+:host {
+  display: block;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px;
+  background:
+    radial-gradient(circle at top left, #e6f5fc, transparent 45%),
+    linear-gradient(135deg, #f7fbfd, #edf5f9);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 430px;
+  background: #ffffff;
+  border: 1px solid #dbe6ed;
+  border-radius: 18px;
+  padding: 36px;
+  box-shadow: 0 18px 50px rgba(24, 65, 90, 0.12);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 34px;
+}
+
+.brand-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1687c2;
+  color: white;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 20px;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 20px;
+  color: #173b56;
+}
+
+.brand span {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  color: #718697;
+}
+
+.login-header {
+  margin-bottom: 27px;
+}
+
+.eyebrow {
+  color: #1687c2;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.7px;
+}
+
+.login-header h2 {
+  color: #173b56;
+  font-size: 30px;
+  margin: 7px 0;
+}
+
+.login-header p {
+  color: #6b8191;
+  line-height: 1.5;
+  margin: 0;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 19px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #344f63;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #ccdbe5;
+  border-radius: 8px;
+  padding: 13px;
+  font: inherit;
+  background: #fbfdfe;
+}
+
+input:focus {
+  outline: 2px solid #c6e5f5;
+  border-color: #1687c2;
+}
+
+button {
+  border: 0;
+  border-radius: 8px;
+  padding: 14px;
+  background: #1687c2;
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 3px;
+}
+
+button:hover {
+  background: #1175a9;
+}
+
+button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.error-message {
+  padding: 11px 13px;
+  border-radius: 7px;
+  background: #fff0ef;
+  color: #ad2e27;
+  font-size: 13px;
+}
+
+.login-footer {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #edf1f4;
+  color: #8294a1;
+  font-size: 11px;
+  text-align: center;
+}

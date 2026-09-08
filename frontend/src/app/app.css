@@ -16,6 +16,46 @@ nav { margin-top: 48px; }
 main { padding: 44px 40px; max-width: 1400px; margin: auto; }
 .skip-link { position: fixed; top: 10px; left: 16px; z-index: 10; background: #fff; padding: 12px; clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; white-space: nowrap; }
 .skip-link:focus { clip-path: none; width: auto; height: auto; }
+.user-area {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+}
+
+.user-info strong {
+  font-size: 13px;
+  color: #173b56;
+}
+
+.user-info small {
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #6c8495;
+}
+
+.logout-button {
+  border: 1px solid #d4e0e7;
+  background: #ffffff;
+  color: #34566c;
+  border-radius: 7px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.logout-button:hover {
+  background: #f2f7fa;
+  border-color: #bfcfd9;
+}
 @media (max-width: 760px) {
   .app-shell { flex-direction: column; }
   .sidebar { width: auto; padding: 20px; }

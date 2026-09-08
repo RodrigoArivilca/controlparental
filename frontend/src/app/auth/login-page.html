@@ -1,0 +1,70 @@
+<div class="login-page">
+
+  <section class="login-card">
+
+    <div class="brand">
+      <div class="brand-icon">S+</div>
+
+      <div>
+        <h1>SaludPlus Pro</h1>
+        <span>CONTROL PARENTAL</span>
+      </div>
+    </div>
+
+    <div class="login-header">
+      <span class="eyebrow">ACCESO SEGURO</span>
+
+      <h2>Iniciar sesión</h2>
+
+      <p>
+        Ingresa con tu cuenta para administrar los dispositivos supervisados.
+      </p>
+    </div>
+
+    <form (ngSubmit)="login()">
+
+      <label>
+        Correo electrónico
+
+        <input
+          type="email"
+          name="correo"
+          [(ngModel)]="correo"
+          placeholder="correo@saludplus.com"
+          autocomplete="email">
+      </label>
+
+      <label>
+        Contraseña
+
+        <input
+          type="password"
+          name="password"
+          [(ngModel)]="password"
+          placeholder="••••••••"
+          autocomplete="current-password">
+      </label>
+
+      @if (error()) {
+        <div class="error-message">
+          {{ error() }}
+        </div>
+      }
+
+      <button
+        type="submit"
+        [disabled]="loading()">
+
+        {{ loading() ? 'Ingresando...' : 'Iniciar sesión' }}
+
+      </button>
+
+    </form>
+
+    <div class="login-footer">
+      SaludPlus Pro · Sistema de supervisión parental
+    </div>
+
+  </section>
+
+</div>

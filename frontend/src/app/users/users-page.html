@@ -1,0 +1,119 @@
+<section class="users-page">
+  <div class="page-header">
+    <div>
+      <span class="eyebrow">ADMINISTRACIÓN</span>
+      <h1>Usuarios</h1>
+      <p>Gestiona los usuarios registrados en SaludPlus Pro.</p>
+    </div>
+
+    <button class="primary" type="button" (click)="newUser()">
+      + Nuevo usuario
+    </button>
+  </div>
+
+  @if (showForm()) {
+    <section class="form-card">
+      <h2>{{ editingId === null ? 'Nuevo usuario' : 'Editar usuario' }}</h2>
+
+      <div class="form-grid">
+        <label>
+          Nombres
+          <input [(ngModel)]="form.nombres" name="nombres">
+        </label>
+
+        <label>
+          Apellidos
+          <input [(ngModel)]="form.apellidos" name="apellidos">
+        </label>
+
+        <label>
+          Correo
+          <input type="email" [(ngModel)]="form.correo" name="correo">
+        </label>
+
+        <label>
+          Contraseña
+          <input
+            type="password"
+            [(ngModel)]="form.password"
+            name="password"
+            [placeholder]="editingId === null ? '' : 'Dejar vacío para conservarla'">
+        </label>
+
+        <label>
+          Rol
+          <select [(ngModel)]="form.rol" name="rol">
+            <option value="ADMIN">Administrador</option>
+            <option value="SUPERVISOR">Supervisor</option>
+            <option value="SUPERVISADO">Supervisado</option>
+          </select>
+        </label>
+
+        <label class="check">
+          <input type="checkbox" [(ngModel)]="form.activo" name="activo">
+          Usuario activo
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="secondary" (click)="cancel()">Cancelar</button>
+        <button type="button" class="primary" (click)="save()">Guardar</button>
+      </div>
+    </section>
+  }
+
+  @if (loading()) {
+    <div class="state-card">Cargando usuarios...</div>
+  } @else if (error()) {
+    <div class="state-card">
+      No se pudieron cargar los usuarios.
+      <button type="button" (click)="loadUsers()">Reintentar</button>
+    </div>
+  } @else {
+    <section class="table-card">
+      <div class="table-title">
+        <strong>Usuarios registrados</strong>
+        <span>{{ users().length }}</span>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Correo</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (user of users(); track user.id) {
+            <tr>
+              <td>
+                <strong>{{ user.nombres }} {{ user.apellidos }}</strong>
+              </td>
+              <td>{{ user.correo }}</td>
+              <td>{{ user.rol }}</td>
+              <td>
+                <span [class.inactive]="!user.activo" class="status">
+                  {{ user.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td class="actions">
+                <button type="button" (click)="editUser(user)">Editar</button>
+                <button type="button" class="danger" (click)="deleteUser(user)">
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="empty">No hay usuarios registrados.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+</section>
