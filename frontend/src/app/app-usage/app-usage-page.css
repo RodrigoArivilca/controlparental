@@ -1,0 +1,175 @@
+.usage-page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 42px 32px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 28px;
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #287cab;
+}
+
+h1 {
+  margin: 8px 0;
+  font-size: 36px;
+  color: #173b56;
+}
+
+p {
+  margin: 0;
+  color: #64798b;
+}
+
+.filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #516d80;
+}
+
+select,
+input {
+  min-width: 180px;
+  padding: 10px;
+  border: 1px solid #ccd9e2;
+  border-radius: 7px;
+  background: white;
+  font: inherit;
+}
+
+.clear-button {
+  padding: 11px 14px;
+  border: 1px solid #ccd9e2;
+  border-radius: 7px;
+  background: white;
+  color: #34566c;
+  cursor: pointer;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  background: white;
+  border: 1px solid #dbe4eb;
+  border-radius: 12px;
+}
+
+.summary-card span {
+  color: #718697;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.summary-card strong {
+  color: #173b56;
+  font-size: 25px;
+}
+
+.table-card,
+.state-card {
+  padding: 24px;
+  background: white;
+  border: 1px solid #dbe4eb;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(29, 61, 84, 0.04);
+}
+
+.state-card.error {
+  margin-bottom: 20px;
+  color: #a9322a;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 15px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e8eef2;
+}
+
+th {
+  color: #657d90;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+td {
+  color: #344f63;
+}
+
+td strong {
+  color: #173b56;
+}
+
+.package {
+  font-size: 12px;
+  color: #748894;
+}
+
+.usage-time {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 12px;
+  background: #eaf5fb;
+  color: #177aab;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.empty {
+  padding: 36px;
+  text-align: center;
+  color: #718495;
+}
+
+@media (max-width: 900px) {
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .summary {
+    grid-template-columns: 1fr;
+  }
+
+  .table-card {
+    overflow-x: auto;
+  }
+}

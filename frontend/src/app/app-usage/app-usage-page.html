@@ -1,0 +1,162 @@
+<section class="usage-page">
+
+  <div class="page-header">
+
+    <div>
+      <span class="eyebrow">SUPERVISIÓN</span>
+
+      <h1>Uso de aplicaciones</h1>
+
+      <p>
+        Consulta el tiempo de uso registrado
+        por los dispositivos supervisados.
+      </p>
+    </div>
+
+    <div class="filters">
+
+      <label>
+        Dispositivo
+
+        <select
+          [(ngModel)]="selectedDeviceId"
+          (ngModelChange)="loadUsage()">
+
+          @for (device of devices(); track device.id) {
+
+            <option [value]="device.id">
+              {{ device.deviceName }}
+              @if (device.model) {
+                - {{ device.model }}
+              }
+            </option>
+
+          }
+
+        </select>
+      </label>
+
+      <label>
+        Fecha
+
+        <input
+          type="date"
+          [(ngModel)]="selectedDate"
+          (ngModelChange)="loadUsage()">
+      </label>
+
+      @if (selectedDate) {
+        <button
+          type="button"
+          class="clear-button"
+          (click)="clearDate()">
+          Ver todo
+        </button>
+      }
+
+    </div>
+
+  </div>
+
+  <section class="summary">
+
+    <div class="summary-card">
+      <span>Aplicaciones registradas</span>
+      <strong>{{ usages().length }}</strong>
+    </div>
+
+    <div class="summary-card">
+      <span>Tiempo total registrado</span>
+      <strong>
+        {{ formatDuration(totalUsageSeconds()) }}
+      </strong>
+    </div>
+
+  </section>
+
+  @if (error()) {
+
+    <div class="state-card error">
+      {{ error() }}
+    </div>
+
+  }
+
+  @if (loading()) {
+
+    <div class="state-card">
+      Cargando uso de aplicaciones...
+    </div>
+
+  } @else {
+
+    <section class="table-card">
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>Aplicación</th>
+            <th>Paquete</th>
+            <th>Tiempo de uso</th>
+            <th>Último uso</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          @for (usage of usages(); track usage.id) {
+
+            <tr>
+
+              <td>
+                <strong>
+                  {{ usage.appName }}
+                </strong>
+              </td>
+
+              <td class="package">
+                {{ usage.packageName }}
+              </td>
+
+              <td>
+                <span class="usage-time">
+                  {{ formatDuration(usage.usageSeconds) }}
+                </span>
+              </td>
+
+              <td>
+                @if (usage.lastUsedAt) {
+                  {{ usage.lastUsedAt | date:'dd/MM/yyyy HH:mm' }}
+                } @else {
+                  -
+                }
+              </td>
+
+              <td>
+                {{ usage.recordedDate | date:'dd/MM/yyyy' }}
+              </td>
+
+            </tr>
+
+          } @empty {
+
+            <tr>
+              <td colspan="5" class="empty">
+                No hay uso de aplicaciones registrado
+                para este dispositivo.
+              </td>
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </section>
+
+  }
+
+</section>

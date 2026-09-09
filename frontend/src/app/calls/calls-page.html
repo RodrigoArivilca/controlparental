@@ -1,0 +1,165 @@
+<section class="calls-page">
+
+  <div class="page-header">
+
+    <div>
+      <span class="eyebrow">SUPERVISIÓN</span>
+      <h1>Registro de llamadas</h1>
+
+      <p>
+        Consulta el historial registrado por los dispositivos supervisados.
+      </p>
+    </div>
+
+    <div class="device-selector">
+
+      <label for="device">
+        Dispositivo
+      </label>
+
+      <select
+        id="device"
+        [(ngModel)]="selectedDeviceId"
+        (ngModelChange)="loadCalls()">
+
+        @for (device of devices(); track device.id) {
+
+          <option [value]="device.id">
+            {{ device.deviceName }}
+            @if (device.model) {
+              - {{ device.model }}
+            }
+          </option>
+
+        }
+
+      </select>
+
+    </div>
+
+  </div>
+
+  @if (error()) {
+
+    <div class="state-card error">
+      {{ error() }}
+    </div>
+
+  }
+
+  @if (loading()) {
+
+    <div class="state-card">
+      Cargando historial de llamadas...
+    </div>
+
+  } @else {
+
+    <section class="table-card">
+
+      <div class="table-title">
+
+        <strong>
+          Historial
+        </strong>
+
+        <span>
+          {{ calls().length }}
+        </span>
+
+      </div>
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>Contacto</th>
+            <th>Número</th>
+            <th>Tipo</th>
+            <th>Duración</th>
+            <th>Fecha</th>
+            <th>Grabación</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          @for (call of calls(); track call.id) {
+
+            <tr>
+
+              <td>
+                <strong>
+                  {{ call.contactName || 'Desconocido' }}
+                </strong>
+              </td>
+
+              <td>
+                {{ call.phoneNumber || '-' }}
+              </td>
+
+              <td>
+                <span
+                  class="call-type"
+                  [class.incoming]="call.callType === 'INCOMING'"
+                  [class.outgoing]="call.callType === 'OUTGOING'"
+                  [class.missed]="call.callType === 'MISSED'">
+
+                  {{ callTypeLabel(call.callType) }}
+
+                </span>
+              </td>
+
+              <td>
+                {{ formatDuration(call.durationSeconds) }}
+              </td>
+
+              <td>
+                {{ call.timestamp | date:'dd/MM/yyyy HH:mm' }}
+              </td>
+
+              <td>
+
+                @if (call.audioUrl) {
+
+                  <audio
+                    controls
+                    preload="none"
+                    [src]="call.audioUrl">
+                  </audio>
+
+                } @else {
+
+                  <span class="no-audio">
+                    Sin grabación
+                  </span>
+
+                }
+
+              </td>
+
+            </tr>
+
+          } @empty {
+
+            <tr>
+              <td
+                colspan="6"
+                class="empty">
+
+                No hay llamadas registradas para este dispositivo.
+
+              </td>
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </section>
+
+  }
+
+</section>

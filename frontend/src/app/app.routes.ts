@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+
 import { authGuard } from './auth/auth-service';
 
 export const routes: Routes = [
@@ -33,6 +34,24 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./users/users-page')
         .then((m) => m.UsersPage),
+  },
+
+  {
+    path: 'llamadas',
+    title: 'Registro de llamadas | SaludPlus',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./calls/calls-page')
+        .then((m) => m.CallsPage),
+  },
+
+  {
+    path: 'uso-aplicaciones',
+    title: 'Uso de aplicaciones | SaludPlus',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./app-usage/app-usage-page')
+        .then((m) => m.AppUsagePage),
   },
 
   {
